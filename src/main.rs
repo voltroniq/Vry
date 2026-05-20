@@ -22,6 +22,17 @@ async fn main() {
     println!("Vry - The Semantic Script Wrapper");
     println!("Scanning: {}\n", args.script);
 
+    let distro = detect_distro();
+    let package_manager = match distro.as_str() {
+        "ubuntu" | "debian" | "linuxmint" => "apt",
+        "arch" | "manjaro" | "endeavouros" => "pacman",
+        "fedora" | "rhel" | "centos" => "dnf",
+        _ => "unknown",
+    };
+
+    println!("Detected distro:   {}", distro);
+    println!("Package manager:   {}\n", package_manager);
+
     let mut total = 0;
     let mut risky = 0;
 
@@ -194,4 +205,21 @@ async fn check_npm(package: &str) -> bool {
             false
         }
     }
+}
+
+// distro detection
+fn detect_distro() -> String {
+    let contents = fs::read_to_string("/etc/os-release").unwrap_or_default();
+
+    for line in contents.lines() {
+        if line.starts_with("ID=") {
+            let id = line
+                .replace("ID=", "")
+                .replace('"', "")
+                .trim()
+                .to_lowercase();
+            return id;
+        }
+    }
+    "unknown".to_string()
 }
